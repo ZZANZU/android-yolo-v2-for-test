@@ -59,7 +59,7 @@ public class TensorFlowImageRecognizer {
     }
 
     private float[] runTensorFlow(final Bitmap bitmap) {
-        final float[] tfOutput = new float[outputSize];
+        final float[] tfOutput = new float[outputSize]; // size : 21125 = 13*13 *125
         // Copy the input data into TensorFlow.
         inferenceInterface.feed(INPUT_NAME, processBitmap(bitmap), 1, INPUT_SIZE, INPUT_SIZE, 3);
 

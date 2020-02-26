@@ -5,9 +5,11 @@ import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Typeface;
+import android.media.AudioManager;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.ImageReader.OnImageAvailableListener;
+import android.media.ToneGenerator;
 import android.os.SystemClock;
 import android.util.Log;
 import android.util.Size;
@@ -64,12 +66,14 @@ public class ClassifierActivity extends TextToSpeechActivity implements OnImageA
         Log.i(LOGGING_TAG, String.format("Sensor orientation: %d, Screen orientation: %d",
                 rotation, screenOrientation));
 
+        sensorOrientation = rotation + screenOrientation;
+
         Log.i(LOGGING_TAG, String.format("Initializing at size %dx%d", previewWidth, previewHeight));
 
         croppedBitmap = Bitmap.createBitmap(INPUT_SIZE, INPUT_SIZE, Config.ARGB_8888);
 
         frameToCropTransform = ImageUtils.getTransformationMatrix(previewWidth, previewHeight,
-                INPUT_SIZE, INPUT_SIZE, 0, MAINTAIN_ASPECT);
+                INPUT_SIZE, INPUT_SIZE, sensorOrientation, MAINTAIN_ASPECT);
         frameToCropTransform.invert(new Matrix());
 
         addCallback((final Canvas canvas) -> renderAdditionalInformation(canvas));
@@ -103,12 +107,32 @@ public class ClassifierActivity extends TextToSpeechActivity implements OnImageA
 
         runInBackground(() -> {
             final long startTime = SystemClock.uptimeMillis();
-            final List<Recognition> results = recognizer.recognizeImage(croppedBitmap);
-            lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
-            overlayView.setResults(results);
-            speak(results);
-            requestRender();
-            computing = false;
+
+            if (recognizer != null) {
+                final List<Recognition> results = recognizer.recognizeImage(croppedBitmap);
+                lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
+
+                if (results.size() > 0) {
+                    for (Recognition result : results) {
+                        if (result.getTitle().equals("dog") || result.getTitle().equals("cat")) {
+                            overlayView.setResults(results);
+                            requestRender();
+                            computing = false;
+
+                            ToneGenerator toneGen1 = new ToneGenerator(AudioManager.STREAM_MUSIC, 1000);
+                            toneGen1.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD,1000);
+
+                            break;
+                        } else {
+                            computing = false;
+                        }
+                    }
+                } else  {
+                    overlayView.setResults(results);
+                    requestRender();
+                    computing = false;
+                }
+            }
         });
     }
 

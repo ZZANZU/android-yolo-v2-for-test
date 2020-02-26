@@ -23,10 +23,10 @@ import java.util.Vector;
  */
 public class YOLOClassifier {
     private final static float OVERLAP_THRESHOLD = 0.5f;
-    private final static double anchors[] = {1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52};
-    private final static int SIZE = 13;
+    private final static double anchors[] = {1.19,1.08,  3.42,4.41,  11.38,6.63,  9.42,5.11,  16.62,10.52}; // 가로, 세로 비율(가로가 더 크게 주니까 강아지 인식 잘됨)
+    private final static int SIZE = 13; // 셀 개수
     private final static int MAX_RECOGNIZED_CLASSES = 13;
-    private final static float THRESHOLD = 0.3f;
+    private final static float THRESHOLD = 0.1f;
     private final static int MAX_RESULTS = 15;
     private final static int NUMBER_OF_BOUNDING_BOX = 5;
     private static YOLOClassifier classifier;
