@@ -18,10 +18,10 @@ import android.util.TypedValue;
 import org.tensorflow.yolo.R;
 import org.tensorflow.yolo.TensorFlowImageRecognizer;
 import org.tensorflow.yolo.model.Recognition;
-import org.tensorflow.yolo.util.ClassAttrProvider;
 import org.tensorflow.yolo.util.ImageUtils;
 import org.tensorflow.yolo.view.components.BorderedText;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
@@ -73,7 +73,7 @@ public class ClassifierActivity extends TextToSpeechActivity implements OnImageA
         croppedBitmap = Bitmap.createBitmap(INPUT_SIZE, INPUT_SIZE, Config.ARGB_8888);
 
         frameToCropTransform = ImageUtils.getTransformationMatrix(previewWidth, previewHeight,
-                INPUT_SIZE, INPUT_SIZE, sensorOrientation, MAINTAIN_ASPECT);
+                INPUT_SIZE, INPUT_SIZE, sensorOrientation, MAINTAIN_ASPECT); // frame을 INPUT_SIZE X INPUT_SIZE로 crop함
         frameToCropTransform.invert(new Matrix());
 
         addCallback((final Canvas canvas) -> renderAdditionalInformation(canvas));
@@ -110,24 +110,23 @@ public class ClassifierActivity extends TextToSpeechActivity implements OnImageA
 
             if (recognizer != null) {
                 final List<Recognition> results = recognizer.recognizeImage(croppedBitmap);
+                List<Recognition> dogResults = new ArrayList<Recognition>();
                 lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
 
                 if (results.size() > 0) {
                     for (Recognition result : results) {
                         if (result.getTitle().equals("dog") || result.getTitle().equals("cat")) {
-                            overlayView.setResults(results);
-                            requestRender();
-                            computing = false;
+                            dogResults.add(result);
 
                             ToneGenerator toneGen1 = new ToneGenerator(AudioManager.STREAM_MUSIC, 1000);
-                            toneGen1.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD,1000);
-
-                            break;
-                        } else {
-                            computing = false;
+                            toneGen1.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 1000);
                         }
                     }
-                } else  {
+                    if (dogResults != null) overlayView.setResults(dogResults);
+
+                    requestRender();
+                    computing = false;
+                } else {
                     overlayView.setResults(results);
                     requestRender();
                     computing = false;
