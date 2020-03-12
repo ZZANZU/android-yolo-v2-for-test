@@ -19,6 +19,7 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.ImageReader;
 import android.media.ImageReader.OnImageAvailableListener;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -227,7 +228,7 @@ public class CameraConnectionFragment extends Fragment {
         }
 
         // Pick the smallest of those, assuming we found any
-        return (bigEnough.size() > 0) ? Collections.min(bigEnough, new CompareSizesByArea()) : choices[0];
+        return (bigEnough.size() > 0) ? Collections.max(bigEnough, new CompareSizesByArea()) : choices[0];
     }
 
     /**
@@ -300,7 +301,7 @@ public class CameraConnectionFragment extends Fragment {
         configureTransform(width, height);
         final Activity activity = getActivity();
         /**
-         * {@link android.hardware.camera2.CameraDevice.StateCallback}
+         * {@link CameraDevice.StateCallback}
          * is called when {@link CameraDevice} changes its state.
          */
         final CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
@@ -308,36 +309,38 @@ public class CameraConnectionFragment extends Fragment {
             if (!cameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
                 throw new RuntimeException("Time out waiting to lock camera opening.");
             }
-            if (activity.checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                manager.openCamera(cameraId, new CameraDevice.StateCallback() {
-                    @Override
-                    public void onOpened(final CameraDevice cameraDevice) {
-                        // This method is called when the camera is opened.  We start camera preview here.
-                        cameraOpenCloseLock.release();
-                        CameraConnectionFragment.this.cameraDevice = cameraDevice;
-                        createCameraPreviewSession();
-                    }
-
-                    @Override
-                    public void onDisconnected(final CameraDevice cameraDevice) {
-                        cameraOpenCloseLock.release();
-                        cameraDevice.close();
-                        CameraConnectionFragment.this.cameraDevice = null;
-                    }
-
-                    @Override
-                    public void onError(final CameraDevice cameraDevice, final int error) {
-                        cameraOpenCloseLock.release();
-                        cameraDevice.close();
-                        CameraConnectionFragment.this.cameraDevice = null;
-                        final Activity activity = getActivity();
-                        if (null != activity) {
-                            activity.finish();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (activity.checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                    manager.openCamera(cameraId, new CameraDevice.StateCallback() {
+                        @Override
+                        public void onOpened(final CameraDevice cameraDevice) {
+                            // This method is called when the camera is opened.  We start camera preview here.
+                            cameraOpenCloseLock.release();
+                            CameraConnectionFragment.this.cameraDevice = cameraDevice;
+                            createCameraPreviewSession();
                         }
-                    }
-                }, backgroundHandler);
-            } else {
-                requestPermissions(new String[]{Manifest.permission.CAMERA}, 1);
+
+                        @Override
+                        public void onDisconnected(final CameraDevice cameraDevice) {
+                            cameraOpenCloseLock.release();
+                            cameraDevice.close();
+                            CameraConnectionFragment.this.cameraDevice = null;
+                        }
+
+                        @Override
+                        public void onError(final CameraDevice cameraDevice, final int error) {
+                            cameraOpenCloseLock.release();
+                            cameraDevice.close();
+                            CameraConnectionFragment.this.cameraDevice = null;
+                            final Activity activity = getActivity();
+                            if (null != activity) {
+                                activity.finish();
+                            }
+                        }
+                    }, backgroundHandler);
+                } else {
+                    requestPermissions(new String[]{Manifest.permission.CAMERA}, 1);
+                }
             }
         } catch (final CameraAccessException ex) {
             Log.e(LOGGING_TAG, "Exception: " + ex.getMessage());

@@ -73,7 +73,7 @@ public class ClassifierActivity extends TextToSpeechActivity implements OnImageA
         croppedBitmap = Bitmap.createBitmap(INPUT_SIZE, INPUT_SIZE, Config.ARGB_8888);
 
         frameToCropTransform = ImageUtils.getTransformationMatrix(previewWidth, previewHeight,
-                INPUT_SIZE, INPUT_SIZE, sensorOrientation, MAINTAIN_ASPECT); // frame을 INPUT_SIZE X INPUT_SIZE로 crop함
+                INPUT_SIZE, INPUT_SIZE, 0, MAINTAIN_ASPECT); // frame을 INPUT_SIZE X INPUT_SIZE로 crop함
         frameToCropTransform.invert(new Matrix());
 
         addCallback((final Canvas canvas) -> renderAdditionalInformation(canvas));

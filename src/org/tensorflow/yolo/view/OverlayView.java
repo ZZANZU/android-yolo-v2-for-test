@@ -6,10 +6,12 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 
 import org.tensorflow.yolo.Config;
+import org.tensorflow.yolo.R;
 import org.tensorflow.yolo.model.BoxPosition;
 import org.tensorflow.yolo.model.Recognition;
 import org.tensorflow.yolo.util.ClassAttrProvider;
@@ -53,11 +55,13 @@ public class OverlayView extends View {
         if (results != null) {
             for (int i = 0; i < results.size(); i++) {
                 RectF box = reCalcSize(results.get(i).getLocation());
+                Log.d("zzanzu", "onDraw: " + results.get(i).getLocation().toString());
                 String title = results.get(i).getTitle() + ":"
                         + String.format("%.2f", results.get(i).getConfidence());
-                paint.setColor(colors.get(results.get(i).getId()));
+//                paint.setColor(colors.get(results.get(i).getId()));
+                paint.setColor(getResources().getColor(R.color.control_background));
                 canvas.drawRect(box, paint);
-                canvas.drawText(title, box.left, box.top, paint);
+                canvas.drawText(title, box.right, box.top, paint);
             }
         }
     }

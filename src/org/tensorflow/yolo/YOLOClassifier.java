@@ -1,5 +1,7 @@
 package org.tensorflow.yolo;
 
+import android.util.Log;
+
 import org.apache.commons.math3.analysis.function.Sigmoid;
 import org.tensorflow.Operation;
 import org.tensorflow.yolo.model.BoundingBox;
@@ -22,8 +24,8 @@ import java.util.Vector;
  * https://github.com/szaza/android-yolo-v2
  */
 public class YOLOClassifier {
-    private final static float OVERLAP_THRESHOLD = 0.5f;
-    private final static double anchors[] = {1.19,1.08,  3.42,4.41,  11.38,6.63,  9.42,5.11,  16.62,10.52}; // 가로, 세로 비율(가로가 더 크게 주니까 강아지 인식 잘됨)
+    private final static float OVERLAP_THRESHOLD = 0.01f; // 이전 프레임과 비교하였을 때 차이
+    private final static double anchors[] = {1.08,1.19,  3.42,4.41,  6.63,8.38,  9.42,5.11,  0.98,1.23}; // 앵커 사이즈 값이 작으면 작은 얘들도 더 잘 인식되지 않을까?
     private final static int SIZE = 13; // 셀 개수
     private final static int MAX_RECOGNIZED_CLASSES = 13;
     private final static float THRESHOLD = 0.1f;
@@ -60,7 +62,7 @@ public class YOLOClassifier {
      * @return a list of recognition objects
      */
     public List<Recognition> classifyImage(final float[] tensorFlowOutput, final Vector<String> labels) {
-        int numClass = (int) (tensorFlowOutput.length / (Math.pow(SIZE,2) * NUMBER_OF_BOUNDING_BOX) - 5);
+        int numClass = (int) (tensorFlowOutput.length / (Math.pow(SIZE,2) * NUMBER_OF_BOUNDING_BOX) - 5); // tensorflowOutput
         BoundingBox[][][] boundingBoxPerCell = new BoundingBox[SIZE][SIZE][NUMBER_OF_BOUNDING_BOX];
         PriorityQueue<Recognition> priorityQueue = new PriorityQueue<>(MAX_RECOGNIZED_CLASSES, new RecognitionComparator());
 
@@ -83,6 +85,8 @@ public class YOLOClassifier {
         Sigmoid sigmoid = new Sigmoid();
         model.setX((cx + sigmoid.value(tensorFlowOutput[offset])) * 32);
         model.setY((cy + sigmoid.value(tensorFlowOutput[offset + 1])) * 32);
+//        model.setX((cy + sigmoid.value(tensorFlowOutput[offset + 1])) * 32);
+//        model.setY((cx + sigmoid.value(tensorFlowOutput[offset])) * 32);
         model.setWidth(Math.exp(tensorFlowOutput[offset + 2]) * anchors[2 * b] * 32);
         model.setHeight(Math.exp(tensorFlowOutput[offset + 3]) * anchors[2 * b + 1] * 32);
         model.setConfidence(sigmoid.value(tensorFlowOutput[offset + 4]));
